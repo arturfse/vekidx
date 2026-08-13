@@ -49,7 +49,7 @@ impl VectorIndex {
             return Err(Error::new(Status::InvalidArg, "batch is empty"));
         }
 
-        if vectors.len() % self.dim != 0 {
+        if !vectors.len().is_multiple_of(self.dim) {
             return Err(Error::new(
                 Status::InvalidArg,
                 format!(
