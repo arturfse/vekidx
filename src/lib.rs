@@ -95,8 +95,9 @@ fn top_k(data: &[f32], dim: usize, count: usize, q: &[f32], k: usize) -> Vec<Hit
         best.push((dot(&data[i * dim..(i + 1) * dim], q), i as u32));
     }
 
-    best.sort_unstable_by(|a, b| b.0.total_cmp(&a.0));
+    best.select_nth_unstable_by(k - 1, |a, b| b.0.total_cmp(&a.0));
     best.truncate(k);
+    best.sort_unstable_by(|a, b| b.0.total_cmp(&a.0));
     best.into_iter()
         .map(|(s, i)| Hit {
             index: i,
@@ -127,7 +128,6 @@ fn dot(a: &[f32], b: &[f32]) -> f32 {
 
     sum
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -173,7 +173,10 @@ mod tests {
             let slow = dot_slow(&a, &b);
             // Float adds round. Compare by ratio, not by a fixed difference.
             let scale = slow.abs().max(1.0);
-            assert!((fast - slow).abs() / scale < 1e-5, "len {len}: {fast} vs {slow}");
+            assert!(
+                (fast - slow).abs() / scale < 1e-5,
+                "len {len}: {fast} vs {slow}"
+            );
         }
     }
 
