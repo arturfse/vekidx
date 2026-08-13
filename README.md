@@ -1,4 +1,4 @@
-# vecidx
+# vekidx
 
 Vector similarity search for Node, written in Rust
 
@@ -9,13 +9,13 @@ Vector similarity search for Node, written in Rust
 ## Install
 
 ```bash
-npm install vecidx
+npm install vekidx
 ```
 
 ## Use
 
 ```js
-const { VectorIndex } = require("vecidx");
+const { VectorIndex } = require("vekidx");
 
 const index = new VectorIndex(384);
 // Float32Array, all vectors end to end

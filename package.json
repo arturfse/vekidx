@@ -1,5 +1,5 @@
 {
-  "name": "vecidx",
+  "name": "vekidx",
   "version": "0.1.0",
   "description": "Exact vector similarity search for Node, written in Rust",
   "main": "index.js",
@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/arturfse/vecidx.git"
+    "url": "git+https://github.com/arturfse/vekidx.git"
   },
   "keywords": [
     "vector-search",
@@ -32,7 +32,7 @@
     "access": "public"
   },
   "napi": {
-    "binaryName": "vecidx",
+    "binaryName": "vekidx",
     "targets": [
       "aarch64-apple-darwin",
       "x86_64-apple-darwin",
