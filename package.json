@@ -1,0 +1,16 @@
+{
+  "name": "vecidx",
+  "version": "0.1.0",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "napi": {
+    "binaryName": "vecidx"
+  },
+  "scripts": {
+    "build": "napi build --platform --release",
+    "check": "cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.8.6"
+  }
+}

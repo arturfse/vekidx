@@ -1,0 +1,18 @@
+[package]
+name = "vecidx"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+
+[dependencies]
+napi = { version = "3.12.1", features = ["napi4"] }
+napi-derive = "3.6.3"
+
+[build-dependencies]
+napi-build = "2.4.1"
