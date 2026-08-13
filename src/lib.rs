@@ -1,5 +1,6 @@
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
+use std::sync::Arc;
 
 #[napi(object)]
 pub struct Hit {
@@ -10,7 +11,7 @@ pub struct Hit {
 #[napi]
 pub struct VectorIndex {
     dim: usize,
-    data: Vec<f32>,
+    data: Arc<Vec<f32>>,
     count: usize,
 }
 
@@ -24,7 +25,7 @@ impl VectorIndex {
 
         Ok(VectorIndex {
             dim: dim as usize,
-            data: Vec::new(),
+            data: Arc::new(Vec::new()),
             count: 0,
         })
     }
@@ -56,8 +57,15 @@ impl VectorIndex {
             ));
         }
 
-        self.data.reserve(vectors.len());
-        self.data.extend_from_slice(&vectors);
+        let data = Arc::get_mut(&mut self.data).ok_or_else(|| {
+            Error::new(
+                Status::GenericFailure,
+                "cannot add while a search is running",
+            )
+        })?;
+        data.reserve(vectors.len());
+        data.extend_from_slice(&vectors);
+
         self.count += vectors.len() / self.dim;
         Ok(self.count as u32)
     }
@@ -67,6 +75,20 @@ impl VectorIndex {
     pub fn search(&self, query: Float32Array, k: u32) -> Result<Vec<Hit>> {
         let q = self.check_query(&query)?;
         Ok(top_k(&self.data, self.dim, self.count, q, k as usize))
+    }
+
+    /// The work runs on another thread
+    #[napi(catch_unwind, ts_return_type = "Promise<Array<Hit>>")]
+    pub fn search_async(&self, query: Float32Array, k: u32) -> Result<AsyncTask<SearchTask>> {
+        self.check_query(&query)?;
+
+        Ok(AsyncTask::new(SearchTask {
+            data: Arc::clone(&self.data),
+            dim: self.dim,
+            count: self.count,
+            query: query.to_vec(),
+            k: k as usize,
+        }))
     }
 
     fn check_query<'a>(&self, query: &'a Float32Array) -> Result<&'a [f32]> {
@@ -81,6 +103,28 @@ impl VectorIndex {
             ));
         }
         Ok(query)
+    }
+}
+
+/// Carries everything the worker thread needs.
+pub struct SearchTask {
+    data: Arc<Vec<f32>>,
+    dim: usize,
+    count: usize,
+    query: Vec<f32>,
+    k: usize,
+}
+
+impl Task for SearchTask {
+    type Output = Vec<Hit>;
+    type JsValue = Vec<Hit>;
+
+    fn compute(&mut self) -> Result<Self::Output> {
+        Ok(top_k(&self.data, self.dim, self.count, &self.query, self.k))
+    }
+
+    fn resolve(&mut self, _env: Env, out: Self::Output) -> Result<Self::JsValue> {
+        Ok(out)
     }
 }
 
