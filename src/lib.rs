@@ -2,6 +2,9 @@ use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use std::sync::Arc;
 
+/// First 4 bytes of a saved file. Stops reading a wrong file
+const MAGIC: &[u8; 4] = b"VIDX";
+
 #[napi(object)]
 pub struct Hit {
     pub index: u32,
@@ -75,6 +78,50 @@ impl VectorIndex {
     pub fn search(&self, query: Float32Array, k: u32) -> Result<Vec<Hit>> {
         let q = self.check_query(&query)?;
         Ok(top_k(&self.data, self.dim, self.count, q, k as usize))
+    }
+
+    #[napi(catch_unwind)]
+    pub fn save(&self, path: String) -> Result<u32> {
+        let mut out = Vec::with_capacity(12 + self.data.len() * 4);
+
+        out.extend_from_slice(MAGIC);
+        out.extend_from_slice(&(self.dim as u32).to_le_bytes());
+        out.extend_from_slice(&(self.count as u32).to_le_bytes());
+        out.extend_from_slice(bytemuck::cast_slice(&self.data[..]));
+
+        let len = out.len() as u32;
+        std::fs::write(&path, out).map_err(|e| {
+            Error::new(Status::GenericFailure, format!("cannot write {path} - {e}"))
+        })?;
+
+        Ok(len)
+    }
+
+    #[napi(factory, catch_unwind)]
+    pub fn load(path: String) -> Result<Self> {
+        let bytes = std::fs::read(&path)
+            .map_err(|e| Error::new(Status::GenericFailure, format!("cannot read {path} - {e}")))?;
+
+        if bytes.len() < 12 || &bytes[0..4] != MAGIC {
+            return Err(Error::new(Status::InvalidArg, "not a VIDX file"));
+        }
+
+        let dim = u32::from_le_bytes(bytes[4..8].try_into().unwrap()) as usize;
+        let count = u32::from_le_bytes(bytes[8..12].try_into().unwrap()) as usize;
+        let floats = &bytes[12..];
+
+        if dim == 0 || floats.len() != dim * count * 4 {
+            return Err(Error::new(
+                Status::InvalidArg,
+                "file body has the wrong size",
+            ));
+        }
+
+        Ok(VectorIndex {
+            dim,
+            data: Arc::new(bytemuck::pod_collect_to_vec(floats)),
+            count,
+        })
     }
 
     /// The work runs on another thread
