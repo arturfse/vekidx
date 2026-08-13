@@ -1,16 +1,55 @@
 {
   "name": "vecidx",
   "version": "0.1.0",
+  "description": "Exact vector similarity search for Node, written in Rust",
   "main": "index.js",
   "types": "index.d.ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arturfse/vecidx.git"
+  },
+  "keywords": [
+    "vector-search",
+    "embeddings",
+    "similarity",
+    "cosine-similarity",
+    "nearest-neighbor",
+    "rag",
+    "rust",
+    "napi-rs",
+    "native"
+  ],
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "engines": {
+    "node": ">= 18"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "napi": {
-    "binaryName": "vecidx"
+    "binaryName": "vecidx",
+    "targets": [
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-pc-windows-msvc"
+    ]
   },
   "scripts": {
     "build": "napi build --platform --release",
-    "check": "cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test"
+    "build:debug": "napi build --platform",
+    "artifacts": "napi artifacts",
+    "check": "cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test",
+    "prepublishOnly": "napi prepublish -t npm",
+    "version": "napi version"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^3.8.6"
+    "@napi-rs/cli": "^3.0.0"
   }
 }
