@@ -22,7 +22,8 @@
   ],
   "files": [
     "index.js",
-    "index.d.ts"
+    "index.d.ts",
+    "*.node"
   ],
   "engines": {
     "node": ">= 18"
@@ -32,21 +33,12 @@
     "access": "public"
   },
   "napi": {
-    "binaryName": "vekidx",
-    "targets": [
-      "aarch64-apple-darwin",
-      "x86_64-apple-darwin",
-      "x86_64-unknown-linux-gnu",
-      "aarch64-unknown-linux-gnu",
-      "x86_64-pc-windows-msvc"
-    ]
+    "binaryName": "vekidx"
   },
   "scripts": {
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
-    "artifacts": "napi artifacts",
     "check": "cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test",
-    "prepublishOnly": "napi prepublish -t npm",
     "version": "napi version"
   },
   "devDependencies": {
