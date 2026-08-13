@@ -62,6 +62,7 @@ impl VectorIndex {
         Ok(self.count as u32)
     }
 
+    /// Find the K most similar vectors.
     #[napi(catch_unwind)]
     pub fn search(&self, query: Float32Array, k: u32) -> Result<Vec<Hit>> {
         let q = self.check_query(&query)?;
@@ -104,12 +105,23 @@ fn top_k(data: &[f32], dim: usize, count: usize, q: &[f32], k: usize) -> Vec<Hit
         .collect()
 }
 
+/// Eight running totals let the CPU add eight pairs at once
 #[inline]
 fn dot(a: &[f32], b: &[f32]) -> f32 {
     debug_assert_eq!(a.len(), b.len());
 
-    let mut sum = 0f32;
-    for i in 0..a.len() {
+    let mut acc = [0f32; 8];
+    let chunks = a.len() / 8;
+
+    for c in 0..chunks {
+        let o = c * 8;
+        for l in 0..8 {
+            acc[l] += a[o + l] * b[o + l];
+        }
+    }
+
+    let mut sum: f32 = acc.iter().sum();
+    for i in chunks * 8..a.len() {
         sum += a[i] * b[i];
     }
 
